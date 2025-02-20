@@ -1,0 +1,38 @@
+Brain Vision Data Exchange Header File Version 1.0
+Data Created by the Body Language Framework
+
+[Common Infos]
+DataFile=1.eeg
+MarkerFile=1.vmrk
+DataFormat=BINARY
+DataOrientation=MULTIPLEXED
+NumberOfChannels=22
+SamplingInterval=3906.25
+
+[Binary Infos]
+BinaryFormat=IEEE_FLOAT_32
+
+[Channel Infos]
+Ch1=Fp1-LE,,1.0
+Ch2=F3-LE,,1.0
+Ch3=C3-LE,,1.0
+Ch4=P3-LE,,1.0
+Ch5=O1-LE,,1.0
+Ch6=F7-LE,,1.0
+Ch7=T3-LE,,1.0
+Ch8=T5-LE,,1.0
+Ch9=Fz-LE,,1.0
+Ch10=Fp2-LE,,1.0
+Ch11=F4-LE,,1.0
+Ch12=C4-LE,,1.0
+Ch13=P4-LE,,1.0
+Ch14=O2-LE,,1.0
+Ch15=F8-LE,,1.0
+Ch16=T4-LE,,1.0
+Ch17=T6-LE,,1.0
+Ch18=Cz-LE,,1.0
+Ch19=Pz-LE,,1.0
+Ch20=A2-A1,,1.0
+Ch21=23A-23R,,1.0
+Ch22=24A-24R,,1.0
+
