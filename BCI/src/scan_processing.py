@@ -1,5 +1,8 @@
 import numpy as np
 import scipy.signal
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+from collections import deque
 
 class ScanProcessing:
     def __init__(self, queue, filter_type='bandpass', low_cut=1, high_cut=40, sampling_rate=256, 
@@ -82,42 +85,33 @@ class ScanProcessing:
             print(f"Moving Average Epoch: {avg_epoch[:, :5]} ... {avg_epoch[:, -5:]}")
 
     def asymmetry_dsp(self, epochs):
-        """Calculates asymmetry score between two input channels."""
+        """Computes the asymmetry score based on selected EEG channels"""
         
-        # Convert list to NumPy array if needed
-        if isinstance(epochs, list):
-            epochs = np.array(epochs)
+        print(f"Asymmetry DSP - Epochs Shape: {epochs.shape}")  # ✅ Debugging output
 
-        # Debugging: Print shape after conversion
-        print(f"Asymmetry DSP - Epochs Shape: {epochs.shape}")
-
-        if epochs.shape[0] < 2:
-            print("Not enough channels for asymmetry calculation. Need at least 2.")
+        if epochs.shape[1] < 2:
+            print("❌ Not enough channels for asymmetry calculation. Need at least 2.")
             return
 
-        # Ensure selected channels are valid
-        if self.asymmetry_channels[0] >= epochs.shape[0] or self.asymmetry_channels[1] >= epochs.shape[0]:
-            print(f"Invalid channel indices for asymmetry: {self.asymmetry_channels}")
+        # Ensure we are selecting the correct indices
+        left_channel_idx, right_channel_idx = self.asymmetry_channels
+        if left_channel_idx >= epochs.shape[1] or right_channel_idx >= epochs.shape[1]:
+            print(f"❌ Invalid channel indices: {left_channel_idx}, {right_channel_idx}. Skipping.")
             return
 
-        # Extract the two channels
-        channel_1 = epochs[self.asymmetry_channels[0]]
-        channel_2 = epochs[self.asymmetry_channels[1]]
+        left_channel_data = epochs[:, left_channel_idx, :]
+        right_channel_data = epochs[:, right_channel_idx, :]
 
-        # Debugging: Check shapes before calculation
-        print(f"Channel 1 shape: {channel_1.shape}, Channel 2 shape: {channel_2.shape}")
+        # Compute power for both channels
+        left_power = np.mean(left_channel_data**2, axis=1)
+        right_power = np.mean(right_channel_data**2, axis=1)
 
-        # Calculate absolute difference between the two channels
-        abs_difference = np.abs(channel_1 - channel_2)
+        # Compute asymmetry score (normalize between 0-100)
+        asymmetry_ratio = np.abs(left_power - right_power) / (left_power + right_power + 1e-10)
+        asymmetry_score = (1 - asymmetry_ratio) * 100
 
-        # Compute asymmetry score (normalized to 0-100)
-        max_val = np.max([np.abs(channel_1), np.abs(channel_2)])  # Avoid division by zero
-        if max_val == 0:
-            asymmetry_score = 100  # If no signal, assume perfect balance
-        else:
-            asymmetry_score = 100 * (1 - (np.mean(abs_difference) / max_val))
+        print(f"🧠 Asymmetry Score: {asymmetry_score}")  # ✅ Expected numerical output
 
-        print(f"Asymmetry Score: {asymmetry_score:.2f}")
 
     def process_data(self):
         """Receives, filters, epochs, and computes moving average + asymmetry DSP"""
@@ -125,6 +119,8 @@ class ScanProcessing:
         print(f"Epoching: {self.epoch_duration}s epochs every {self.epoch_interval}s")
         print(f"Moving Average over last {self.moving_avg_epochs} epochs")
         print(f"Asymmetry DSP enabled on channels: {self.asymmetry_channels}")
+
+        min_required_samples = 30  # Ensure enough data before applying the filter
 
         while True:
             new_data = self.queue.get()
@@ -146,7 +142,7 @@ class ScanProcessing:
             # Ensure all buffers have the same number of channels before stacking
             buffer_shapes = {arr.shape[0] for arr in self.buffer}
             if len(buffer_shapes) > 1:
-                print(f"WARNING: Mismatched buffer shapes {buffer_shapes}. Adjusting dimensions.")
+                print(f"⚠️ WARNING: Mismatched buffer shapes {buffer_shapes}. Adjusting dimensions.")
                 self.buffer = [arr if arr.shape[0] == max(buffer_shapes) 
                             else arr.reshape(max(buffer_shapes), -1) 
                             for arr in self.buffer]
@@ -155,21 +151,35 @@ class ScanProcessing:
             try:
                 data_array = np.hstack(self.buffer)  # Combine into one large array
             except ValueError as e:
-                print(f"ERROR: Buffer shape mismatch. Buffer contents: {[arr.shape for arr in self.buffer]}")
+                print(f"❌ ERROR: Buffer shape mismatch. Buffer contents: {[arr.shape for arr in self.buffer]}")
                 raise e
 
-            if data_array.shape[1] >= self.min_samples:
-                filtered_data = self.apply_filter(data_array)
+            # ✅ Ensure enough samples before applying the filter
+            if data_array.shape[1] < min_required_samples:
+                print(f"⏳ Waiting for more data... Current size: {data_array.shape[1]} / {min_required_samples}")
+                continue  # Skip processing until enough samples accumulate
 
-                # Extract epochs
-                epochs = self.extract_epochs(filtered_data)
+            # Apply filtering once enough data exists
+            filtered_data = self.apply_filter(data_array)
+
+            # Extract epochs
+            epochs = self.extract_epochs(filtered_data)
+
+            # ✅ Ensure epochs are not empty before proceeding
+            if epochs.size > 0:
+                print(f"✅ Extracted Epochs Shape: {epochs.shape}")
 
                 # Compute moving average
-                if epochs:
-                    self.compute_moving_average(epochs)
+                self.compute_moving_average(epochs)
 
-                    # Compute asymmetry score
+                # ✅ Ensure at least 2 channels before asymmetry processing
+                if epochs.shape[1] >= 2:
                     self.asymmetry_dsp(epochs)
+                else:
+                    print("⚠️ Skipping asymmetry calculation due to insufficient channels.")
 
-                # Keep only the latest epoch-sized buffer
-                self.buffer = [data_array[:, -self.epoch_samples:]]  # Keep the most recent window
+            else:
+                print("⚠️ No valid epochs extracted. Skipping processing.")
+
+            # Keep only the latest epoch-sized buffer
+            self.buffer = [data_array[:, -self.epoch_samples:]]  # Keep the most recent window
