@@ -1,37 +1,39 @@
 from panda3d.core import *
 from direct.showbase.ShowBase import ShowBase
 import openvr
+import os
 
 class VRBeachWorld(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
-        
-        # # Initialize OpenVR
-        # self.vr_system = openvr.init(openvr.VRApplication_Scene)
 
+        # Try initializing OpenVR
         try:
             self.vr_system = openvr.init(openvr.VRApplication_Scene)
             print("OpenVR initialized successfully.")
         except openvr.error_code.InitError as e:
             print(f"OpenVR not available: {e}. Running in non-VR mode.")
             self.vr_system = None  # Continue without VR
-        
-        # Load Skybox (Beach Environment)
-        # self.skybox = loader.loadModel("models/skybox")  # Ensure you have a skybox model
-        self.skybox = loader.loadModel("models/environment")  # Built-in model
-        self.skybox.setScale(500)
-        self.skybox.reparentTo(render)
 
-        self.skybox.setScale(500)  # Make it large enough to surround the player
-        self.skybox.reparentTo(render)
-        
+        # Force Panda3D to recognize the models directory
+        getModelPath().appendDirectory(Filename.fromOsSpecific("/home/jarred/git/Brainground/BCI/models/"))
+
+        # Load the skybox
+        self.skybox = loader.loadModel("skybox.egg")  # Load skybox model
+        if self.skybox:
+            print("Skybox loaded successfully!")
+            self.skybox.setScale(500)  # Make it large
+            self.skybox.reparentTo(render)
+        else:
+            print("Error: Skybox model failed to load!")
+
         # Weather settings
         self.weather = "Sunny"
         self.accept("w", self.toggle_weather)
-        
+
         # Lighting (default: Sunny)
         self.setup_lighting("Sunny")
-        
+
     def setup_lighting(self, condition):
         render.clearLight()
         if condition == "Sunny":

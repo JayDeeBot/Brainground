@@ -1,0 +1,85 @@
+<Comment> {
+  "egg-texture-cards -o skybox.egg -g 2,2,2,2 px.png nx.png py.png ny.png pz.png nz.png"
+}
+<Texture> pz {
+  pz.png
+}
+<Texture> py {
+  py.png
+}
+<Texture> px {
+  px.png
+}
+<Texture> nz {
+  nz.png
+}
+<Texture> ny {
+  ny.png
+}
+<Texture> nx {
+  nx.png
+}
+<Group> {
+  <Switch> { 1 }
+  <Scalar> fps { 2 }
+  <VertexPool> vpool {
+    <Vertex> 0 {
+      2 2 0
+      <UV> { 0 1 }
+    }
+    <Vertex> 1 {
+      2 2 0
+      <UV> { 0 0 }
+    }
+    <Vertex> 2 {
+      2 2 0
+      <UV> { 1 0 }
+    }
+    <Vertex> 3 {
+      2 2 0
+      <UV> { 1 1 }
+    }
+  }
+  <Group> px {
+    <Polygon> {
+      <RGBA> { 1 1 1 1 }
+      <TRef> { px }
+      <VertexRef> { 0 1 2 3 <Ref> { vpool } }
+    }
+  }
+  <Group> nx {
+    <Polygon> {
+      <RGBA> { 1 1 1 1 }
+      <TRef> { nx }
+      <VertexRef> { 0 1 2 3 <Ref> { vpool } }
+    }
+  }
+  <Group> py {
+    <Polygon> {
+      <RGBA> { 1 1 1 1 }
+      <TRef> { py }
+      <VertexRef> { 0 1 2 3 <Ref> { vpool } }
+    }
+  }
+  <Group> ny {
+    <Polygon> {
+      <RGBA> { 1 1 1 1 }
+      <TRef> { ny }
+      <VertexRef> { 0 1 2 3 <Ref> { vpool } }
+    }
+  }
+  <Group> pz {
+    <Polygon> {
+      <RGBA> { 1 1 1 1 }
+      <TRef> { pz }
+      <VertexRef> { 0 1 2 3 <Ref> { vpool } }
+    }
+  }
+  <Group> nz {
+    <Polygon> {
+      <RGBA> { 1 1 1 1 }
+      <TRef> { nz }
+      <VertexRef> { 0 1 2 3 <Ref> { vpool } }
+    }
+  }
+}
