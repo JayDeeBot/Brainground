@@ -64,12 +64,26 @@ def main():
     
     # Create DataAquisition and ScanProcessing instances
     data_acquisition = DataAquisition(file_path, data_queue)
-    scan_processing = ScanProcessing(data_queue, gui_queue, filter_type='bandpass', low_cut=low_cut, high_cut=high_cut, 
-                                     epoch_duration=1, epoch_interval=0.5, moving_avg_epochs=4, 
-                                     asymmetry_channels=[
-                                         available_channels.index(asymmetry_channels[0]), 
-                                         available_channels.index(asymmetry_channels[1])
-                                     ])  # Convert back to indices
+
+    # Convert selected channel names to their index in the full EEG list
+    selected_channel_indices = [
+        available_channels.index(asymmetry_channels[0]), 
+        available_channels.index(asymmetry_channels[1])
+    ]
+
+    # Pass these indices to `ScanProcessing`
+    scan_processing = ScanProcessing(
+        data_queue, 
+        gui_queue, 
+        filter_type='bandpass', 
+        low_cut=low_cut, 
+        high_cut=high_cut, 
+        epoch_duration=1, 
+        epoch_interval=0.5, 
+        moving_avg_epochs=4, 
+        asymmetry_channels=[0, 1],  # ✅ Adjusted to be relative to the extracted PSD data
+        selected_channel_names=asymmetry_channels
+    )
 
     # Start ScanProcessing in a separate process
     scan_process = Process(target=scan_processing.process_data)

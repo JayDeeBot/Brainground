@@ -6,13 +6,14 @@ from collections import deque
 
 class ScanProcessing:
     def __init__(self, queue, gui_queue, filter_type='bandpass', low_cut=10, high_cut=13, sampling_rate=256, 
-                 epoch_duration=1, epoch_interval=0.5, moving_avg_epochs=4, asymmetry_channels=None):
+                 epoch_duration=1, epoch_interval=0.5, moving_avg_epochs=4, asymmetry_channels=None, selected_channel_names=[0, 1]):
         self.queue = queue  
         self.gui_queue = gui_queue  # Queue for sending data to GUI
         self.filter_type = filter_type  
         self.low_cut = low_cut
         self.high_cut = high_cut
-        self.sampling_rate = sampling_rate  
+        self.sampling_rate = sampling_rate
+        self.selected_channel_names = selected_channel_names  
         self.buffer = []  
         self.min_samples = 27  
 
@@ -79,17 +80,14 @@ class ScanProcessing:
             print("❌ Invalid asymmetry channel configuration!")
             return
 
-        left_idx, right_idx = self.asymmetry_channels
+        # Since psd_data only contains 2 channels (the selected ones), indices should be [0, 1]
+        left_idx, right_idx = 0, 1
 
-        # Ensure indices are integers
-        if not isinstance(left_idx, int) or not isinstance(right_idx, int):
-            print(f"❌ ERROR: Asymmetry channel indices should be integers, got: {self.asymmetry_channels}")
+        if psd_data.shape[1] < 2:
+            print(f"❌ ERROR: PSD data does not have enough channels ({psd_data.shape[1]} channels). Skipping computation.")
             return
 
-        if left_idx >= psd_data.shape[1] or right_idx >= psd_data.shape[1]:
-            print(f"❌ ERROR: Invalid channel indices: {left_idx}, {right_idx}. Skipping computation.")
-            return
-
+        # Retrieve PSD values
         left_psd = psd_data[:, left_idx]
         right_psd = psd_data[:, right_idx]
 
@@ -132,6 +130,10 @@ class ScanProcessing:
             self.buffer.append(new_data)
             data_array = np.hstack(self.buffer)  # Stack data horizontally
 
+            # Ensure the buffer does not grow indefinitely
+            if data_array.shape[1] > self.epoch_samples * 10:  # Keep only the last 10 epochs worth of data
+                data_array = data_array[:, -self.epoch_samples * 10:]
+
             if data_array.shape[1] < self.epoch_samples:
                 print(f"⏳ Waiting for more data... Current size: {data_array.shape[1]} / {self.epoch_samples}")
                 continue
@@ -144,5 +146,5 @@ class ScanProcessing:
                 psd_data = self.compute_psd_welch(epochs)
                 self.compute_asymmetry_score(psd_data)
 
-            # Remove old samples to allow continuous updates
+            # Trim buffer to avoid memory overflow
             self.buffer = [data_array[:, -self.epoch_samples:]]
