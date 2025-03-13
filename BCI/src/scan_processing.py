@@ -5,7 +5,7 @@ import matplotlib.animation as animation
 from collections import deque
 
 class ScanProcessing:
-    def __init__(self, queue, gui_queue, filter_type='bandpass', low_cut=1, high_cut=40, sampling_rate=256, 
+    def __init__(self, queue, gui_queue, filter_type='bandpass', low_cut=10, high_cut=13, sampling_rate=256, 
                  epoch_duration=1, epoch_interval=0.5, moving_avg_epochs=4, asymmetry_channels=None):
         self.queue = queue  
         self.gui_queue = gui_queue  # Queue for sending data to GUI
@@ -30,7 +30,7 @@ class ScanProcessing:
         self.asymmetry_channels = asymmetry_channels  
 
     def apply_filter(self, data):
-        """Applies temporal filtering (bandpass, high-pass, or low-pass)"""
+        """Applies a bandpass filter for upper alpha waves (10-13 Hz)."""
         nyquist = 0.5 * self.sampling_rate
         filter_order = 4  
 
@@ -41,122 +41,91 @@ class ScanProcessing:
             print(f"Not enough data for filtering ({data.shape[1]} samples). Waiting for more...")
             return data
 
-        if self.filter_type == 'bandpass':
-            b, a = scipy.signal.butter(filter_order, [self.low_cut / nyquist, self.high_cut / nyquist], btype='band')
-        elif self.filter_type == 'lowpass':
-            b, a = scipy.signal.butter(filter_order, self.high_cut / nyquist, btype='low')
-        elif self.filter_type == 'highpass':
-            b, a = scipy.signal.butter(filter_order, self.low_cut / nyquist, btype='high')
-        else:
-            raise ValueError("Invalid filter type. Choose 'bandpass', 'lowpass', or 'highpass'.")
-
+        b, a = scipy.signal.butter(filter_order, [self.low_cut / nyquist, self.high_cut / nyquist], btype='band')
         return scipy.signal.filtfilt(b, a, data, axis=1)
 
     def extract_epochs(self, filtered_data):
         """Splits continuous filtered EEG data into overlapping epochs."""
         num_samples = filtered_data.shape[1]
-        samples_per_epoch = int(self.epoch_duration * self.sampling_rate)
-        stride = int(self.epoch_interval * self.sampling_rate)
-
-        if filtered_data.shape[0] < 2:  # Ensure at least two channels
-            print("❌ Error: Not enough EEG channels detected before epoching!")
-            print(f"Filtered Data Shape: {filtered_data.shape}")
-            return []
+        stride = self.epoch_step
 
         epochs = []
-        for start in range(0, num_samples - samples_per_epoch + 1, stride):
-            epoch = filtered_data[:, start:start + samples_per_epoch]  # Keep all channels
+        for start in range(0, num_samples - self.epoch_samples + 1, stride):
+            epoch = filtered_data[:, start:start + self.epoch_samples]
             epochs.append(epoch)
 
-        epochs = np.array(epochs)  # Convert to numpy array
+        epochs = np.array(epochs)
         print(f"✅ Extracted Epochs Shape: {epochs.shape} (Epochs, Channels, Samples)")
         return epochs
 
-    def compute_moving_average(self, new_epochs):
-        """Computes the moving average of the last N epochs"""
-        self.epoch_history.extend(new_epochs)
+    def compute_psd_welch(self, epochs):
+        """Computes the Power Spectral Density (PSD) using Welch's method."""
+        psd_list = []
+        freqs, _ = scipy.signal.welch(epochs[0, 0, :], fs=self.sampling_rate, nperseg=self.epoch_samples)
+        upper_alpha_idx = np.where((freqs >= self.low_cut) & (freqs <= self.high_cut))
+        
+        for epoch in epochs:
+            psd_epoch = []
+            for channel in epoch:
+                f, psd = scipy.signal.welch(channel, fs=self.sampling_rate, nperseg=self.epoch_samples)
+                psd_epoch.append(np.mean(psd[upper_alpha_idx]))
+            psd_list.append(psd_epoch)
+        
+        return np.array(psd_list)  # Shape: (epochs, channels)
 
-        if len(self.epoch_history) > self.moving_avg_epochs:
-            self.epoch_history = self.epoch_history[-self.moving_avg_epochs:]
-
-        if len(self.epoch_history) >= self.moving_avg_epochs:
-            avg_epoch = np.mean(self.epoch_history, axis=0)
-            print(f"Moving Average Epoch: {avg_epoch[:, :5]} ... {avg_epoch[:, -5:]}")
-
-    def asymmetry_dsp(self, epochs):
-        """Computes the asymmetry score based on selected EEG channels"""
-        print(f"Asymmetry DSP - Epochs Shape: {epochs.shape}")  # ✅ Debugging output
-
-        if epochs.shape[1] < 2:
-            print("❌ Not enough channels for asymmetry calculation. Need at least 2.")
+    def compute_asymmetry_score(self, psd_data):
+        """Computes the upper alpha asymmetry score using the log formula."""
+        if self.asymmetry_channels is None or len(self.asymmetry_channels) != 2:
+            print("❌ Invalid asymmetry channel configuration!")
             return
 
-        left_channel_idx, right_channel_idx = self.asymmetry_channels
-        if left_channel_idx >= epochs.shape[1] or right_channel_idx >= epochs.shape[1]:
-            print(f"❌ Invalid channel indices: {left_channel_idx}, {right_channel_idx}. Skipping.")
+        left_idx, right_idx = self.asymmetry_channels
+
+        # Ensure indices are integers
+        if not isinstance(left_idx, int) or not isinstance(right_idx, int):
+            print(f"❌ ERROR: Asymmetry channel indices should be integers, got: {self.asymmetry_channels}")
             return
 
-        left_channel_data = epochs[:, left_channel_idx, :]
-        right_channel_data = epochs[:, right_channel_idx, :]
+        if left_idx >= psd_data.shape[1] or right_idx >= psd_data.shape[1]:
+            print(f"❌ ERROR: Invalid channel indices: {left_idx}, {right_idx}. Skipping computation.")
+            return
 
-        left_power = np.mean(left_channel_data**2, axis=1)
-        right_power = np.mean(right_channel_data**2, axis=1)
+        left_psd = psd_data[:, left_idx]
+        right_psd = psd_data[:, right_idx]
 
-        asymmetry_ratio = np.abs(left_power - right_power) / (left_power + right_power + 1e-10)
-        asymmetry_score = (1 - asymmetry_ratio) * 100
-
-        # Ensure it's a single float value (not an array)
-        if isinstance(asymmetry_score, np.ndarray):
-            asymmetry_score = float(np.mean(asymmetry_score))  # Convert to scalar
-
-        print(f"🧠 Asymmetry Score: {asymmetry_score}")  # ✅ Expected numerical output
-
-        # Send score to GUI queue
-        self.gui_queue.put(asymmetry_score)
+        asymmetry_score = np.log10(right_psd + 1e-10) - np.log10(left_psd + 1e-10)  # Avoid log(0)
+        avg_score = np.mean(asymmetry_score)
+        print(f"🧠 Asymmetry Score: {avg_score}")
+        self.gui_queue.put({"score": avg_score})
 
     def process_data(self):
-        """Receives, filters, epochs, and computes moving average + asymmetry DSP"""
+        """Receives, filters, epochs, computes PSD and asymmetry score in real-time."""
         print(f"ScanProcessing started with {self.filter_type} filter: {self.low_cut}-{self.high_cut} Hz")
         print(f"Epoching: {self.epoch_duration}s epochs every {self.epoch_interval}s")
-        print(f"Moving Average over last {self.moving_avg_epochs} epochs")
         print(f"Asymmetry DSP enabled on channels: {self.asymmetry_channels}")
-
-        min_required_samples = 30  # Ensure enough data before applying the filter
 
         while True:
             new_data = self.queue.get()
-            print(f"🔍 Received Data Shape: {new_data.shape}")
+            print(f"🔍 Received New Data - Shape: {new_data.shape}")  # Debugging
 
             if new_data.shape[0] < 2:
                 print("❌ Error: Not enough EEG channels detected before processing!")
                 continue
 
-            if len(new_data.shape) == 1:
-                new_data = new_data.reshape(1, -1)
-
             self.buffer.append(new_data)
-            buffer_shapes = {arr.shape[0] for arr in self.buffer}
-            if len(buffer_shapes) > 1:
-                print(f"⚠️ WARNING: Mismatched buffer shapes {buffer_shapes}. Adjusting dimensions.")
-                self.buffer = [arr if arr.shape[0] == max(buffer_shapes) else arr.reshape(max(buffer_shapes), -1) for arr in self.buffer]
+            data_array = np.hstack(self.buffer)  # Stack data horizontally
 
-            try:
-                data_array = np.hstack(self.buffer)
-            except ValueError as e:
-                print(f"❌ ERROR: Buffer shape mismatch. Buffer contents: {[arr.shape for arr in self.buffer]}")
-                raise e
-
-            if data_array.shape[1] < min_required_samples:
-                print(f"⏳ Waiting for more data... Current size: {data_array.shape[1]} / {min_required_samples}")
+            if data_array.shape[1] < self.epoch_samples:
+                print(f"⏳ Waiting for more data... Current size: {data_array.shape[1]} / {self.epoch_samples}")
                 continue
 
+            print(f"✅ Processing Data - Shape: {data_array.shape}")  # Debugging
             filtered_data = self.apply_filter(data_array)
             epochs = self.extract_epochs(filtered_data)
 
             if epochs.size > 0:
-                print(f"✅ Extracted Epochs Shape: {epochs.shape}")
-                self.compute_moving_average(epochs)
-                if epochs.shape[1] >= 2:
-                    self.asymmetry_dsp(epochs)
-                else:
-                    print("⚠️ Skipping asymmetry calculation due to insufficient channels.")
+                psd_data = self.compute_psd_welch(epochs)
+                self.compute_asymmetry_score(psd_data)
+
+            # Remove old samples to allow continuous updates
+            self.buffer = [data_array[:, -self.epoch_samples:]]
