@@ -74,7 +74,7 @@ class ScanProcessing:
         return np.array(psd_list)  # Shape: (epochs, channels)
 
     def compute_asymmetry_score(self, psd_data):
-        """Computes the upper alpha asymmetry score using the log formula."""
+        """Computes the upper alpha asymmetry score using the log formula and maps it to 0-100."""
         if self.asymmetry_channels is None or len(self.asymmetry_channels) != 2:
             print("❌ Invalid asymmetry channel configuration!")
             return
@@ -93,10 +93,27 @@ class ScanProcessing:
         left_psd = psd_data[:, left_idx]
         right_psd = psd_data[:, right_idx]
 
+        # Compute FAA Score (Logarithmic Difference)
         asymmetry_score = np.log10(right_psd + 1e-10) - np.log10(left_psd + 1e-10)  # Avoid log(0)
         avg_score = np.mean(asymmetry_score)
-        print(f"🧠 Asymmetry Score: {avg_score}")
-        self.gui_queue.put({"score": avg_score})
+
+        # Apply Mapping Function
+        mapped_score = self.map_faa_score(avg_score)
+
+        # Debugging Output
+        print(f"🧠 Raw FAA Score: {avg_score} → Mapped Score: {mapped_score}")
+
+        # Send Mapped Score to GUI
+        self.gui_queue.put({"score": mapped_score})
+
+    def map_faa_score(self, faa_score):
+        """Maps the FAA score (-0.1 to 0.1) to a range of 0-100."""
+        if faa_score < -0.02:
+            return max(0, 25 * (faa_score + 0.02) / (-0.08))  # Map -0.1 to 0.02 → 0 to 25
+        elif -0.02 <= faa_score <= 0.02:
+            return 25 + (faa_score + 0.02) * (50 / 0.04)  # Map -0.02 to 0.02 → 25 to 75
+        else:
+            return min(100, 75 + (faa_score - 0.02) * (25 / 0.08))  # Map 0.02 to 0.1 → 75 to 100
 
     def process_data(self):
         """Receives, filters, epochs, computes PSD and asymmetry score in real-time."""

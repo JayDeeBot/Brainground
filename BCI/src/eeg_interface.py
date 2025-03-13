@@ -91,9 +91,13 @@ class EegInterface(QWidget):
 
         # Load emoji images dynamically
         base_path = os.path.dirname(os.path.abspath(__file__))
-        self.happy_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/happy.png"))
-        self.neutral_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/neutral.jpeg"))
-        self.sad_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/sad.png"))
+        self.happiest_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/1.png"))
+        self.happier_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/2.png"))
+        self.happy_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/3.png"))
+        self.neutral_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/4.png"))
+        self.sad_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/5.png"))
+        self.sadder_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/6.png"))
+        self.saddest_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/7.png"))
         
         self.emoji_label.setPixmap(self.neutral_face.scaled(80, 80, Qt.KeepAspectRatio))
 
@@ -173,9 +177,17 @@ class EegInterface(QWidget):
 
     def update_emoji(self, score):
         """Updates the emoji display based on the asymmetry score."""
-        if score > 80:
+        if score > 95:
+            self.emoji_label.setPixmap(self.happiest_face.scaled(80, 80, Qt.KeepAspectRatio))
+        elif score >= 85:
+            self.emoji_label.setPixmap(self.happier_face.scaled(80, 80, Qt.KeepAspectRatio))
+        elif score >= 75:
             self.emoji_label.setPixmap(self.happy_face.scaled(80, 80, Qt.KeepAspectRatio))
         elif score >= 50:
             self.emoji_label.setPixmap(self.neutral_face.scaled(80, 80, Qt.KeepAspectRatio))
-        else:
+        elif score >= 25:
             self.emoji_label.setPixmap(self.sad_face.scaled(80, 80, Qt.KeepAspectRatio))
+        elif score >= 15:
+            self.emoji_label.setPixmap(self.sadder_face.scaled(80, 80, Qt.KeepAspectRatio))
+        else:
+            self.emoji_label.setPixmap(self.saddest_face.scaled(80, 80, Qt.KeepAspectRatio))
