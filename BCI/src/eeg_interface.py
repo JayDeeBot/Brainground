@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QPushBut
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtGui import QPixmap, QFont
 import multiprocessing
+import subprocess
 
 class EegInterface(QWidget):
     def __init__(self, queue):
@@ -75,6 +76,11 @@ class EegInterface(QWidget):
         self.run_button.setEnabled(False)
         self.run_button.clicked.connect(self.start_scenario)
         self.layout.addWidget(self.run_button)
+
+        # Launch VR World Button
+        self.vr_button = QPushButton("Launch VR World", self)
+        self.vr_button.clicked.connect(self.launch_vr_world)
+        self.layout.addWidget(self.vr_button)
 
         # Score label with larger font
         self.label = QLabel("Waiting for data...")
@@ -191,3 +197,7 @@ class EegInterface(QWidget):
             self.emoji_label.setPixmap(self.sadder_face.scaled(80, 80, Qt.KeepAspectRatio))
         else:
             self.emoji_label.setPixmap(self.saddest_face.scaled(80, 80, Qt.KeepAspectRatio))
+
+    def launch_vr_world(self):
+        print("🚀 Launching VR World...")
+        subprocess.Popen(["/bin/python3", "/home/jarred/git/Brainground/BCI/src/vr_world.py"])
