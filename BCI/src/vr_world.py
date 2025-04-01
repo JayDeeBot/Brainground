@@ -30,19 +30,22 @@ class VRWorld(ShowBase):
         # Rotate the skybox slowly
         self.taskMgr.add(self.rotate_skybox, "RotateSkyboxTask")
 
-        # Animate lighting over time (sunrise/sunset effect)
-        self.taskMgr.add(self.animate_lighting, "AnimateLightingTask")
+        self.taskMgr.add(self.listen_for_lighting, "LightingFileListener")
 
     def rotate_skybox(self, task):
         self.skybox.setH(self.skybox.getH() + 0.02)
         return task.cont
 
-    def animate_lighting(self, task):
-        brightness = 0.5 + 0.5 * math.sin(task.time * 0.2)
-        warm = 0.7 + 0.3 * math.sin(task.time * 0.2)
-
-        self.alight.setColor((brightness, brightness, brightness, 1))
-        self.dlight.setColor((warm, warm * 0.9, brightness * 0.8, 1))
+    def listen_for_lighting(self, task):
+        try:
+            # with open("/tmp/lighting_value.txt", "r") as f: # Slider Score
+            with open("/home/jarred/git/Brainground/BCI/score_output.txt", "r") as f: # Actual Score
+                brightness = float(f.read().strip()) / 100.0
+                brightness = max(0.0, min(1.0, brightness))
+                self.alight.setColor((brightness, brightness, brightness, 1))
+                self.dlight.setColor((brightness, brightness, brightness, 1))
+        except:
+            pass  # File might not exist yet
         return task.cont
 
 if __name__ == "__main__":

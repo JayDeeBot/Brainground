@@ -92,7 +92,7 @@ class ScanProcessing:
         right_psd = psd_data[:, right_idx]
 
         # Compute FAA Score (Logarithmic Difference)
-        asymmetry_score = np.log10(right_psd + 1e-10) - np.log10(left_psd + 1e-10)  # Avoid log(0)
+        asymmetry_score = np.log10(right_psd + 1e-10) - np.log10(left_psd + 1e-10)
         avg_score = np.mean(asymmetry_score)
 
         # Apply Mapping Function
@@ -103,6 +103,13 @@ class ScanProcessing:
 
         # Send Mapped Score to GUI
         self.gui_queue.put({"score": mapped_score})
+
+        # ✅ Save mapped score to a .txt file (overwritten each update)
+        try:
+            with open("/home/jarred/git/Brainground/BCI/score_output.txt", "w") as f:
+                f.write(str(mapped_score))
+        except Exception as e:
+            print(f"❌ Failed to write score to file: {e}")
 
     def map_faa_score(self, faa_score):
         """Maps the FAA score (-0.1 to 0.1) to a range of 0-100."""

@@ -1,6 +1,6 @@
 import sys
 import os
-from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QPushButton, QFileDialog, QComboBox, QHBoxLayout
+from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QPushButton, QFileDialog, QComboBox, QHBoxLayout, QSlider
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtGui import QPixmap, QFont
 import multiprocessing
@@ -82,6 +82,17 @@ class EegInterface(QWidget):
         self.vr_button.clicked.connect(self.launch_vr_world)
         self.layout.addWidget(self.vr_button)
 
+        # Lighting Control Slider
+        self.slider_label = QLabel("Lighting Control (Manual Override):")
+        self.layout.addWidget(self.slider_label)
+
+        self.lighting_slider = QSlider(Qt.Horizontal)
+        self.lighting_slider.setMinimum(0)
+        self.lighting_slider.setMaximum(100)
+        self.lighting_slider.setValue(75)
+        self.lighting_slider.valueChanged.connect(self.slider_changed)
+        self.layout.addWidget(self.lighting_slider)
+
         # Score label with larger font
         self.label = QLabel("Waiting for data...")
         self.label.setAlignment(Qt.AlignCenter)
@@ -113,6 +124,14 @@ class EegInterface(QWidget):
         self.timer.start(100)  # Check every 100 ms
 
         print("✅ GUI Initialization Complete")
+
+    def slider_changed(self, value):
+        print(f"🕹️ Lighting slider value: {value}")
+        try:
+            with open("/tmp/lighting_value.txt", "w") as f:
+                f.write(str(value))
+        except Exception as e:
+            print(f"⚠️ Failed to write slider value: {e}")
 
     def load_image(self, path):
         """Safely loads an image, handling missing files."""
