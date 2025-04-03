@@ -1,0 +1,5 @@
+<map id="data_acquisition.DataAquisition.play_real_time" name="data_acquisition.DataAquisition.play_real_time">
+<area shape="rect" id="node1" title="Starts real&#45;time EEG playback with visualization and streaming to ScanProcessing." alt="" coords="5,23,267,65"/>
+<area shape="rect" id="node2" href="$classdata__acquisition_1_1DataAquisition.html#acd378117fb5bf06a6c9684faa2126301" title="Initializes the real&#45;time scrolling EEG plot using Matplotlib." alt="" coords="319,5,621,32"/>
+<area shape="rect" id="node3" href="$classdata__acquisition_1_1DataAquisition.html#a7cdbef0d5a6ba738e9cda0d5261f4658" title="Updates the EEG plot with the most recent EEG buffer data." alt="" coords="315,56,625,83"/>
+</map>

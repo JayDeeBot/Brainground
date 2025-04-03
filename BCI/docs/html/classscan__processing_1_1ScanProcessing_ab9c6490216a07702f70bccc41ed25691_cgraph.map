@@ -1,0 +1,8 @@
+<map id="scan_processing.ScanProcessing.process_data" name="scan_processing.ScanProcessing.process_data">
+<area shape="rect" id="node1" title="Main processing loop that handles streaming EEG data end&#45;to&#45;end." alt="" coords="5,111,329,138"/>
+<area shape="rect" id="node2" href="$classscan__processing_1_1ScanProcessing.html#a70499a8024176b68979991c35cb7548b" title="Applies a bandpass Butterworth filter to EEG data." alt="" coords="387,5,662,47"/>
+<area shape="rect" id="node3" href="$classscan__processing_1_1ScanProcessing.html#ae5b8bc06b43a2b009ccc13df3e653429" title="Computes the FAA&#45;based asymmetry score from PSD data and sends result to GUI." alt="" coords="377,71,672,112"/>
+<area shape="rect" id="node5" href="$classscan__processing_1_1ScanProcessing.html#a66e384743d6b1a86099949abe3a80ff6" title="Computes power spectral density (PSD) using Welch’s method." alt="" coords="377,136,672,177"/>
+<area shape="rect" id="node6" href="$classscan__processing_1_1ScanProcessing.html#afd89f8dc4aed347e02f20043ee4a5907" title="Splits filtered EEG signal into overlapping epochs." alt="" coords="383,201,667,243"/>
+<area shape="rect" id="node4" href="$classscan__processing_1_1ScanProcessing.html#a9af86632c1ca59a21ac4ed867958c6fc" title="Maps the FAA asymmetry score from range (&#45;0.1 to 0.1) into [0, 100] scale." alt="" coords="720,71,987,112"/>
+</map>

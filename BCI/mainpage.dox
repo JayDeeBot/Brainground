@@ -1,0 +1,50 @@
+/**
+ * \mainpage BCI Project – Real-Time EEG Analysis and VR Feedback
+ *
+ * \section intro_sec Introduction
+ *
+ * The BCI Project is a real-time brain-computer interface system that reads EEG signals from .edf files,
+ * processes them to calculate upper-alpha band asymmetry scores, and visually represents those scores
+ * in both a graphical user interface (GUI) and a 3D virtual reality (VR) environment.
+ *
+ * This system is designed for closed-loop neurofeedback scenarios, making it suitable for cognitive experiments,
+ * affective computing, and interactive wellness applications.
+ *
+ * \section features_sec Features
+ *
+ * - Real-time EEG acquisition and visualization  
+ * - Bandpass filtering and signal preprocessing  
+ * - Epoch-based Power Spectral Density (PSD) analysis using Welch's method  
+ * - FAA (Frontal Alpha Asymmetry) score computation and normalization  
+ * - GUI with live score updates and emotional emoji feedback  
+ * - Immersive VR environment with lighting adjusted in real time based on EEG signals  
+ * - Multiprocessing architecture for performance and responsiveness
+ *
+ * \section architecture_sec System Architecture
+ *
+ * - DataAquisition – Loads and streams EEG data in real time  
+ * - ScanProcessing – Filters EEG data, extracts epochs, and computes FAA asymmetry scores  
+ * - EegInterface – GUI for selecting EEG files, channels, and visualizing scores  
+ * - VRWorld – Panda3D-based 3D environment that responds to EEG-derived scores  
+ * - main.py – Ties all components together using multiprocessing and real-time communication
+ *
+ * \section usage_sec Getting Started
+ *
+ * 1. Run the main script:
+ * \code
+ * python3 main.py
+ * \endcode
+ *
+ * 2. Select an .edf EEG file and two channels of interest via the GUI.  
+ * 3. The GUI will show live score updates, and the VR world will launch automatically,
+ *    adjusting lighting based on the user's EEG asymmetry score.
+ *
+ * \section credits_sec Authors
+ *
+ * - Jarred Deluca – Developer and system architect  
+ * - Built with: Python, PyQt5, MNE, Panda3D, SciPy, NumPy
+ *
+ * \section license_sec License
+ *
+ * This project is developed for academic and experimental use. Licensing terms TBD.
+ */

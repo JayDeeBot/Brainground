@@ -1,0 +1,4 @@
+<map id="vr_world.VRWorld" name="vr_world.VRWorld">
+<area shape="rect" id="node1" title="Creates a 3D VR environment using Panda3D with a dynamic skybox and lighting system." alt="" coords="5,80,143,107"/>
+<area shape="rect" id="node2" title=" " alt="" coords="29,5,119,32"/>
+</map>

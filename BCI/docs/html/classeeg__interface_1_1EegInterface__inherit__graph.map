@@ -1,0 +1,4 @@
+<map id="eeg_interface.EegInterface" name="eeg_interface.EegInterface">
+<area shape="rect" id="node1" title="Provides a GUI interface for EEG session configuration, score display, and VR interaction." alt="" coords="5,80,203,107"/>
+<area shape="rect" id="node2" title=" " alt="" coords="65,5,143,32"/>
+</map>

@@ -1,3 +1,11 @@
+## \file main.py
+#  \brief Entry point for running the full BCI system.
+#
+#  This script launches the EEG GUI in a separate process, waits for user input,
+#  then coordinates EEG data acquisition, filtering, epoching, and asymmetry score
+#  processing using multiprocessing. It connects the GUI, DataAquisition, and
+#  ScanProcessing components into a functional pipeline.
+
 from multiprocessing import Process, Queue
 from data_acquisition import DataAquisition
 from scan_processing import ScanProcessing
@@ -5,6 +13,8 @@ from eeg_interface import EegInterface
 import time
 from PyQt5.QtWidgets import QApplication
 
+## \brief Runs the PyQt5 GUI in a separate process.
+#  \param queue Multiprocessing queue used to receive messages from GUI (e.g., start command).
 def run_gui(queue):
     """Runs the GUI in a separate process."""
     app = QApplication([])
@@ -12,6 +22,13 @@ def run_gui(queue):
     interface.show()
     app.exec_()
 
+## \brief Main function that initializes and manages all components of the BCI pipeline.
+#
+#  This function:
+#  - Starts the GUI process
+#  - Waits for user input (EEG file, channels, filter settings)
+#  - Starts DataAquisition and ScanProcessing as coordinated processes
+#  - Loads and plays EEG data in real time
 def main():
     # Create queues for inter-process communication
     data_queue = Queue()
@@ -107,5 +124,6 @@ def main():
     scan_process.join()
     gui_process.join()
 
+## \brief Script entry point.
 if __name__ == "__main__":
     main()

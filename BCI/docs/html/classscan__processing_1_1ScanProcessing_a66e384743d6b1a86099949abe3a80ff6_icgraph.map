@@ -1,0 +1,4 @@
+<map id="scan_processing.ScanProcessing.compute_psd_welch" name="scan_processing.ScanProcessing.compute_psd_welch">
+<area shape="rect" id="node1" title="Computes power spectral density (PSD) using Welch’s method." alt="" coords="377,5,672,47"/>
+<area shape="rect" id="node2" href="$classscan__processing_1_1ScanProcessing.html#ab9c6490216a07702f70bccc41ed25691" title="Main processing loop that handles streaming EEG data end&#45;to&#45;end." alt="" coords="5,13,329,39"/>
+</map>

@@ -1,0 +1,4 @@
+<map id="scan_processing.ScanProcessing.compute_asymmetry_score" name="scan_processing.ScanProcessing.compute_asymmetry_score">
+<area shape="rect" id="node1" title="Computes the FAA&#45;based asymmetry score from PSD data and sends result to GUI." alt="" coords="377,5,672,47"/>
+<area shape="rect" id="node2" href="$classscan__processing_1_1ScanProcessing.html#ab9c6490216a07702f70bccc41ed25691" title="Main processing loop that handles streaming EEG data end&#45;to&#45;end." alt="" coords="5,13,329,39"/>
+</map>

@@ -1,0 +1,4 @@
+<map id="data_acquisition.DataAquisition.update_plot" name="data_acquisition.DataAquisition.update_plot">
+<area shape="rect" id="node1" title="Updates the EEG plot with the most recent EEG buffer data." alt="" coords="315,13,625,39"/>
+<area shape="rect" id="node2" href="$classdata__acquisition_1_1DataAquisition.html#a138e8140dcc356a1781ab76bacc90fed" title="Starts real&#45;time EEG playback with visualization and streaming to ScanProcessing." alt="" coords="5,5,267,47"/>
+</map>

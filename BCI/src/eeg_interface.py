@@ -6,7 +6,16 @@ from PyQt5.QtGui import QPixmap, QFont
 import multiprocessing
 import subprocess
 
+## \class EegInterface
+#  \brief Provides a GUI interface for EEG session configuration, score display, and VR interaction.
+#
+#  This class implements a PyQt5 GUI for selecting EEG files, choosing channels, adjusting frequency
+#  filters, starting the scenario, launching the VR environment, and visualizing the user's EEG-based
+#  asymmetry score in both text and emoji form. It communicates with the EEG processing pipeline using
+#  a multiprocessing queue.
 class EegInterface(QWidget):
+    ## \brief Constructor for EegInterface.
+    #  \param queue Multiprocessing queue for receiving updates (e.g., asymmetry scores).
     def __init__(self, queue):
         super().__init__()
         self.queue = queue  # Queue to receive scores from ScanProcessing
@@ -25,6 +34,7 @@ class EegInterface(QWidget):
         
         self.init_ui()
 
+    ## \brief Initializes the EEG GUI layout and components.
     def init_ui(self):
         """Initializes the GUI layout."""
         print("🔧 Initializing EEG GUI...")
@@ -125,6 +135,8 @@ class EegInterface(QWidget):
 
         print("✅ GUI Initialization Complete")
 
+    ## \brief Handles changes to the lighting control slider and updates external file.
+    #  \param value Current slider value (0–100).
     def slider_changed(self, value):
         print(f"🕹️ Lighting slider value: {value}")
         try:
@@ -133,6 +145,9 @@ class EegInterface(QWidget):
         except Exception as e:
             print(f"⚠️ Failed to write slider value: {e}")
 
+    ## \brief Loads an image for use in the GUI, with error checking.
+    #  \param path Absolute path to the image file.
+    #  \return QPixmap object, even if empty on failure.
     def load_image(self, path):
         """Safely loads an image, handling missing files."""
         pixmap = QPixmap(path)
@@ -140,6 +155,7 @@ class EegInterface(QWidget):
             print(f"⚠️ Warning: Missing image file - {path}")
         return pixmap
 
+    ## \brief Opens file dialog to select an EEG file and enables scenario button.
     def select_file(self):
         """Opens a file dialog to select an EEG file."""
         options = QFileDialog.Options()
@@ -149,6 +165,8 @@ class EegInterface(QWidget):
             self.label.setText(f"Selected File: {os.path.basename(file_path)}")
             self.run_button.setEnabled(True)  # Enable run button
 
+    ## \brief Updates the low cutoff frequency for bandpass filtering.
+    #  \param value New low cutoff value as a string.
     def update_low_cut(self, value):
         """Updates the low cut frequency from dropdown."""
         self.low_cut = int(value)
@@ -156,6 +174,8 @@ class EegInterface(QWidget):
         if self.low_cut >= self.high_cut:
             self.high_cut_dropdown.setCurrentText(str(self.low_cut + 1))  # Ensure high_cut is always greater
 
+    ## \brief Updates the high cutoff frequency for bandpass filtering.
+    #  \param value New high cutoff value as a string.
     def update_high_cut(self, value):
         """Updates the high cut frequency from dropdown."""
         self.high_cut = int(value)
@@ -163,6 +183,7 @@ class EegInterface(QWidget):
         if self.high_cut <= self.low_cut:
             self.low_cut_dropdown.setCurrentText(str(self.high_cut - 1))  # Ensure low_cut is always smaller
 
+    ## \brief Sends a command to start the EEG scenario with the current config.
     def start_scenario(self):
         """Starts the EEG scenario by sending the file path, channels, and filter settings."""
         if self.file_path:
@@ -181,6 +202,7 @@ class EegInterface(QWidget):
             })
             print(f"✅ Start command sent with file: {self.file_path}, channels: {self.selected_channels}, and bandpass: {self.low_cut}-{self.high_cut} Hz")
 
+    ## \brief Periodically checks the multiprocessing queue for incoming messages.
     def check_for_updates(self):
         """Periodically checks for score updates from the queue."""
         while not self.queue.empty():
@@ -190,6 +212,8 @@ class EegInterface(QWidget):
             if isinstance(message, dict) and "score" in message:
                 self.update_score(message["score"])
 
+    ## \brief Updates the displayed score and emoji based on the latest value.
+    #  \param score Float or string score from ScanProcessing.
     def update_score(self, score):
         """Updates the GUI with the latest asymmetry score."""
         try:
@@ -200,6 +224,8 @@ class EegInterface(QWidget):
         except ValueError:
             print(f"⚠️ Invalid score received: {score}")
 
+    ## \brief Updates the emoji display to match the current score level.
+    #  \param score Numerical asymmetry score (0–100).
     def update_emoji(self, score):
         """Updates the emoji display based on the asymmetry score."""
         if score > 95:
@@ -217,6 +243,7 @@ class EegInterface(QWidget):
         else:
             self.emoji_label.setPixmap(self.saddest_face.scaled(80, 80, Qt.KeepAspectRatio))
 
+    ## \brief Launches the Panda3D VR world as a subprocess.
     def launch_vr_world(self):
         print("🚀 Launching VR World...")
         subprocess.Popen(["/bin/python3", "/home/jarred/git/Brainground/BCI/src/vr_world.py"])

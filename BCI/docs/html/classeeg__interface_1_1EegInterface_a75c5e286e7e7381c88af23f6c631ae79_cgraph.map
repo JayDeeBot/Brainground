@@ -1,0 +1,4 @@
+<map id="eeg_interface.EegInterface.update_score" name="eeg_interface.EegInterface.update_score">
+<area shape="rect" id="node1" title="Updates the displayed score and emoji based on the latest value." alt="" coords="5,5,252,47"/>
+<area shape="rect" id="node2" href="$classeeg__interface_1_1EegInterface.html#ae320cb29b7bea9903cc1d7e8ec14f1d6" title="Updates the emoji display to match the current score level." alt="" coords="300,5,547,47"/>
+</map>

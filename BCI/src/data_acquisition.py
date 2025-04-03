@@ -4,7 +4,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
+## \class DataAquisition
+#  \brief Handles real-time EEG data acquisition from an EDF file, visualization, and communication with processing module.
+#
+#  This class reads EEG data from an EDF file using the MNE library, allows channel selection,
+#  visualizes the data in real-time using Matplotlib, and sends processed EEG data chunks
+#  to the ScanProcessing class through a multiprocessing queue.
 class DataAquisition:
+    ## \brief Constructor for the DataAquisition class.
+    #  \param file_path Path to the .edf EEG file.
+    #  \param queue Multiprocessing queue for sending data to ScanProcessing.
+    #  \param window_size Time window (in seconds) for the scrolling EEG plot.
     def __init__(self, file_path, queue, window_size=5):
         self.file_path = file_path
         self.raw = None
@@ -18,6 +28,8 @@ class DataAquisition:
         self.selected_channels = None
         self.selected_data = None
 
+    ## \brief Reads EEG data from the specified EDF file using MNE.
+    #  \return Raw MNE object containing EEG data, or None on failure.
     def read_edf(self):
         """Reads EEG data from an EDF file"""
         try:
@@ -31,6 +43,8 @@ class DataAquisition:
             print(f"Error loading EDF file: {e}")
             return None
 
+    ## \brief Selects specific EEG channels from the loaded EDF data for playback and visualization.
+    #  \param channel_names List of EEG channel names to select.
     def select_channels(self, channel_names):
         """Selects specific EEG channels for playback"""
         if self.raw is None:
@@ -52,6 +66,7 @@ class DataAquisition:
         print(f"Selected Channels: {self.selected_channels}")
         print(f"Data Shape: {self.selected_data.shape} (Channels, Samples)")
 
+    ## \brief Initializes the real-time scrolling EEG plot using Matplotlib.
     def setup_plot(self):
         """Initializes the real-time EEG plot"""
         num_channels = len(self.selected_channels)
@@ -70,12 +85,19 @@ class DataAquisition:
         self.ax[-1].set_xlabel("Time (s)")
         plt.suptitle("Real-Time EEG Streaming")
 
+    ## \brief Updates the EEG plot with the most recent EEG buffer data.
+    #  \param frame Current animation frame index (not used directly).
+    #  \return Updated line objects for the Matplotlib animation.
     def update_plot(self, frame):
         """Updates the EEG plot with new data"""
         for i, line in enumerate(self.lines):
             line.set_data(self.time_buffer, self.data_buffer[i])
         return self.lines
 
+    ## \brief Starts real-time EEG playback with visualization and streaming to ScanProcessing.
+    #
+    #  This method simulates real-time EEG acquisition by feeding data into a live plot and 
+    #  sending 1-sample-wide slices to the processing pipeline via a multiprocessing queue.
     def play_real_time(self):
         """Simulates real-time EEG scanning with visualization and sends data to ScanProcessing"""
         if self.raw is None or self.selected_data is None:
