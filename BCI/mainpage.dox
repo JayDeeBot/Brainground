@@ -32,7 +32,7 @@
  *
  * 1. Run the main script:
  * \code
- * python3 main.py
+ * py d:\Brainground\git\Brainground\BCI\src\main.py
  * \endcode
  *
  * 2. Select an .edf EEG file and two channels of interest via the GUI.  
