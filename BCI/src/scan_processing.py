@@ -128,7 +128,8 @@ class ScanProcessing:
         self.gui_queue.put({"score": mapped_score})
 
         try:
-            with open("/home/jarred/git/Brainground/BCI/score_output.txt", "w") as f:
+            # with open("/home/jarred/git/Brainground/BCI/score_output.txt", "w") as f: # Linux
+            with open(r"D:\Brainground\git\Brainground\BCI\score_output.txt", "w") as f: # Windows
                 f.write(str(mapped_score))
         except Exception as e:
             print(f"❌ Failed to write score to file: {e}")

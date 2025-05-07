@@ -1,6 +1,6 @@
 import sys
 import os
-from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QPushButton, QFileDialog, QComboBox, QHBoxLayout, QSlider
+from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QPushButton, QFileDialog, QComboBox, QHBoxLayout, QSlider, QRadioButton, QButtonGroup
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtGui import QPixmap, QFont
 import multiprocessing
@@ -21,8 +21,6 @@ class EegInterface(QWidget):
         self.queue = queue  # Queue to receive scores from ScanProcessing
         self.file_path = None  # Store the selected file path
         self.selected_channels = None  # Store the selected EEG channels
-        self.low_cut = 8  # Default low cut-off frequency
-        self.high_cut = 12  # Default high cut-off frequency
         
         self.available_channels = [
             'EEG Fp1-LE', 'EEG F3-LE', 'EEG C3-LE', 'EEG P3-LE', 'EEG O1-LE', 
@@ -31,6 +29,8 @@ class EegInterface(QWidget):
             'EEG T4-LE', 'EEG T6-LE', 'EEG Cz-LE', 'EEG Pz-LE', 'EEG A2-A1', 
             'EEG 23A-23R', 'EEG 24A-24R'
         ]
+
+        self.unicorn_channels = [f"Ch {i+1}" for i in range(8)]
         
         self.init_ui()
 
@@ -42,6 +42,17 @@ class EegInterface(QWidget):
         self.setGeometry(100, 100, 500, 550)  # Adjusted size to fit all elements
         
         self.layout = QVBoxLayout()
+
+        self.source_group = QButtonGroup(self)
+        self.radio_file = QRadioButton("EDF File")
+        self.radio_device = QRadioButton("Unicorn Device")
+        self.source_group.addButton(self.radio_file)
+        self.source_group.addButton(self.radio_device)
+        self.radio_file.toggled.connect(self.toggle_source_selection)
+
+        self.layout.addWidget(QLabel("Select EEG Data Source:"))
+        self.layout.addWidget(self.radio_file)
+        self.layout.addWidget(self.radio_device)
         
         # File selection button
         self.file_button = QPushButton("Select EEG File", self)
@@ -59,33 +70,27 @@ class EegInterface(QWidget):
         self.layout.addWidget(QLabel("Select Channel 2:"))
         self.layout.addWidget(self.channel2_dropdown)
         
-        # Frequency selection layout
-        self.freq_layout = QHBoxLayout()
+        # Frequency band selection
+        self.freq_band_dropdown = QComboBox(self)
+        self.freq_band_dropdown.addItems(["Alpha", "Beta", "Theta", "Delta", "Gamma"])
+        self.freq_band_dropdown.setCurrentText("Alpha")
+        self.layout.addWidget(QLabel("Select Frequency Band:"))
+        self.layout.addWidget(self.freq_band_dropdown)
         
-        self.low_cut_dropdown = QComboBox(self)
-        self.low_cut_dropdown.addItems([str(i) for i in range(1, 50)])  # 1-49 Hz
-        self.low_cut_dropdown.setCurrentText(str(self.low_cut))
-        self.low_cut_dropdown.currentTextChanged.connect(self.update_low_cut)
-        
-        self.high_cut_dropdown = QComboBox(self)
-        self.high_cut_dropdown.addItems([str(i) for i in range(2, 51)])  # 2-50 Hz
-        self.high_cut_dropdown.setCurrentText(str(self.high_cut))
-        self.high_cut_dropdown.currentTextChanged.connect(self.update_high_cut)
-        
-        # Ensure they appear in the layout
-        self.freq_layout.addWidget(QLabel("Low Cut (Hz):"))
-        self.freq_layout.addWidget(self.low_cut_dropdown)
-        self.freq_layout.addWidget(QLabel("High Cut (Hz):"))
-        self.freq_layout.addWidget(self.high_cut_dropdown)
-        
-        self.layout.addLayout(self.freq_layout)  # <--- Ensure this is added
-        print("✅ Added Frequency Selection to Layout")
+        print("✅ Added Frequency Band Selection to Layout")
 
         # Run scenario button (disabled until a file is selected)
         self.run_button = QPushButton("Run Scenario", self)
         self.run_button.setEnabled(False)
         self.run_button.clicked.connect(self.start_scenario)
         self.layout.addWidget(self.run_button)
+
+        # Stop Scenario Button
+        self.stop_button = QPushButton("Stop Scenario", self)
+        # Initially disable stop button until a scenario is running
+        self.stop_button.setEnabled(False)
+        self.stop_button.clicked.connect(self.stop_scenario)
+        self.layout.addWidget(self.stop_button)
 
         # Launch VR World Button
         self.vr_button = QPushButton("Launch VR World", self)
@@ -118,13 +123,21 @@ class EegInterface(QWidget):
 
         # Load emoji images dynamically
         base_path = os.path.dirname(os.path.abspath(__file__))
-        self.happiest_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/1.png"))
-        self.happier_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/2.png"))
-        self.happy_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/3.png"))
-        self.neutral_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/4.png"))
-        self.sad_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/5.png"))
-        self.sadder_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/6.png"))
-        self.saddest_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/7.png"))
+        # self.happiest_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/1.png")) # Linux
+        # self.happier_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/2.png"))
+        # self.happy_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/3.png"))
+        # self.neutral_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/4.png"))
+        # self.sad_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/5.png"))
+        # self.sadder_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/6.png"))
+        # self.saddest_face = self.load_image(os.path.join(base_path, "/home/jarred/git/Brainground/BCI/img/7.png"))
+
+        self.happiest_face = self.load_image(os.path.join(base_path, r"D:\Brainground\git\Brainground\BCI\img\1.png")) # Windows
+        self.happier_face = self.load_image(os.path.join(base_path, r"D:\Brainground\git\Brainground\BCI\img\2.png"))
+        self.happy_face = self.load_image(os.path.join(base_path, r"D:\Brainground\git\Brainground\BCI\img\3.png"))
+        self.neutral_face = self.load_image(os.path.join(base_path, r"D:\Brainground\git\Brainground\BCI\img\4.png"))
+        self.sad_face = self.load_image(os.path.join(base_path, r"D:\Brainground\git\Brainground\BCI\img\5.png"))
+        self.sadder_face = self.load_image(os.path.join(base_path, r"D:\Brainground\git\Brainground\BCI\img\6.png"))
+        self.saddest_face = self.load_image(os.path.join(base_path, r"D:\Brainground\git\Brainground\BCI\img\7.png"))
         
         self.emoji_label.setPixmap(self.neutral_face.scaled(80, 80, Qt.KeepAspectRatio))
 
@@ -133,6 +146,8 @@ class EegInterface(QWidget):
         self.timer.timeout.connect(self.check_for_updates)
         self.timer.start(100)  # Check every 100 ms
 
+        self.toggle_source_selection()
+
         print("✅ GUI Initialization Complete")
 
     ## \brief Handles changes to the lighting control slider and updates external file.
@@ -140,7 +155,8 @@ class EegInterface(QWidget):
     def slider_changed(self, value):
         print(f"🕹️ Lighting slider value: {value}")
         try:
-            with open("/tmp/lighting_value.txt", "w") as f:
+            # with open("/tmp/lighting_value.txt", "w") as f: # Linux
+            with open(r"D:\Brainground\git\Brainground\BCI\score_output.txt", "w") as f: # Windows
                 f.write(str(value))
         except Exception as e:
             print(f"⚠️ Failed to write slider value: {e}")
@@ -165,42 +181,44 @@ class EegInterface(QWidget):
             self.label.setText(f"Selected File: {os.path.basename(file_path)}")
             self.run_button.setEnabled(True)  # Enable run button
 
-    ## \brief Updates the low cutoff frequency for bandpass filtering.
-    #  \param value New low cutoff value as a string.
-    def update_low_cut(self, value):
-        """Updates the low cut frequency from dropdown."""
-        self.low_cut = int(value)
-        print(f"🔄 Updated Low Cut Frequency: {self.low_cut} Hz")
-        if self.low_cut >= self.high_cut:
-            self.high_cut_dropdown.setCurrentText(str(self.low_cut + 1))  # Ensure high_cut is always greater
-
-    ## \brief Updates the high cutoff frequency for bandpass filtering.
-    #  \param value New high cutoff value as a string.
-    def update_high_cut(self, value):
-        """Updates the high cut frequency from dropdown."""
-        self.high_cut = int(value)
-        print(f"🔄 Updated High Cut Frequency: {self.high_cut} Hz")
-        if self.high_cut <= self.low_cut:
-            self.low_cut_dropdown.setCurrentText(str(self.high_cut - 1))  # Ensure low_cut is always smaller
-
     ## \brief Sends a command to start the EEG scenario with the current config.
     def start_scenario(self):
-        """Starts the EEG scenario by sending the file path, channels, and filter settings."""
-        if self.file_path:
-            print("📤 Sending start command to main process...")
-            self.run_button.setEnabled(False)  # Prevent multiple clicks
+        print("📤 Sending start command to main process...")
+        self.run_button.setEnabled(False)
+        self.stop_button.setEnabled(True)  # ✅ Enable stop button when scenario starts
+
+        if self.radio_file.isChecked():
             self.selected_channels = (
                 self.available_channels.index(self.channel1_dropdown.currentText()),
                 self.available_channels.index(self.channel2_dropdown.currentText())
             )
             self.queue.put({
-                "command": "start", 
-                "file_path": self.file_path, 
+                "command": "start_file",
+                "file_path": self.file_path,
                 "asymmetry_channels": self.selected_channels,
-                "low_cut": self.low_cut,
-                "high_cut": self.high_cut
+                "frequency_band": self.freq_band_dropdown.currentText()
             })
-            print(f"✅ Start command sent with file: {self.file_path}, channels: {self.selected_channels}, and bandpass: {self.low_cut}-{self.high_cut} Hz")
+            print(f"✅ Start command sent with file: {self.file_path}, channels: {self.selected_channels}, and frequency band: {self.freq_band_dropdown.currentText()}")
+
+        elif self.radio_device.isChecked():
+            self.selected_channels = (
+                self.unicorn_channels.index(self.channel1_dropdown.currentText()),
+                self.unicorn_channels.index(self.channel2_dropdown.currentText())
+            )
+            self.queue.put({
+                "command": "start_device",
+                "asymmetry_channels": self.selected_channels,
+                "frequency_band": self.freq_band_dropdown.currentText()
+            })
+            print(f"✅ Start command sent from Unicorn device, channels: {self.selected_channels}, and frequency band: {self.freq_band_dropdown.currentText()}")
+
+    ## \brief Sends a command to stop the running EEG scenario.
+    def stop_scenario(self):
+        print("📤 Sending stop command to main process...")
+        self.queue.put({"command": "stop"})
+        # Re-enable the run button so the user can start a new scenario later.
+        self.run_button.setEnabled(True)
+        self.stop_button.setEnabled(False)
 
     ## \brief Periodically checks the multiprocessing queue for incoming messages.
     def check_for_updates(self):
@@ -246,4 +264,25 @@ class EegInterface(QWidget):
     ## \brief Launches the Panda3D VR world as a subprocess.
     def launch_vr_world(self):
         print("🚀 Launching VR World...")
-        subprocess.Popen(["/bin/python3", "/home/jarred/git/Brainground/BCI/src/vr_world.py"])
+        # subprocess.Popen(["/bin/python3", "/home/jarred/git/Brainground/BCI/src/vr_world.py"]) # Linux
+        subprocess.Popen([sys.executable, r"D:\Brainground\git\Brainground\BCI\src\vr_world.py"]) # Windows
+
+    def toggle_source_selection(self):
+        is_file = self.radio_file.isChecked()
+        self.file_button.setEnabled(is_file)
+
+        if is_file:
+            self.channel1_dropdown.clear()
+            self.channel2_dropdown.clear()
+            self.channel1_dropdown.addItems(self.available_channels)
+            self.channel2_dropdown.addItems(self.available_channels)
+        else:
+            self.channel1_dropdown.clear()
+            self.channel2_dropdown.clear()
+            self.channel1_dropdown.addItems(self.unicorn_channels)
+            self.channel2_dropdown.addItems(self.unicorn_channels)
+
+        enabled = is_file or self.radio_device.isChecked()
+        self.channel1_dropdown.setEnabled(enabled)
+        self.channel2_dropdown.setEnabled(enabled)
+        self.run_button.setEnabled(enabled and (self.file_path is not None if is_file else True))

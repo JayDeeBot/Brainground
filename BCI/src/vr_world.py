@@ -1,7 +1,10 @@
+from panda3d.core import loadPrcFileData
 from panda3d.core import *
 from direct.showbase.ShowBase import ShowBase
 import simplepbr
 from panda3d.core import AmbientLight, DirectionalLight
+from panda3d.core import Filename, getModelPath
+from panda3d.core import WindowProperties, loadPrcFileData
 import math
 
 ## \class VRWorld
@@ -13,11 +16,17 @@ import math
 class VRWorld(ShowBase):
     ## \brief Constructor that initializes the 3D world, lighting, and skybox.
     def __init__(self):
+
         super().__init__()
         simplepbr.init()
 
+        # Set the model path - Windows Only
+        model_dir = Filename.fromOsSpecific(r"D:\Brainground\git\Brainground\BCI\models").getFullpath()
+        getModelPath().append_directory(model_dir)
+
         # Load the skybox model
-        self.skybox = self.loader.loadModel("/home/jarred/git/Brainground/BCI/models/skybox.bam")
+        # self.skybox = self.loader.loadModel("/home/jarred/git/Brainground/BCI/models/skybox.bam") # Linux
+        self.skybox = self.loader.loadModel("skybox.bam") # Windows
         self.skybox.reparentTo(self.render)
         self.skybox.set_scale(10000)
 
@@ -57,9 +66,11 @@ class VRWorld(ShowBase):
     def listen_for_lighting(self, task):
         try:
             # with open("/tmp/lighting_value.txt", "r") as f: # Slider Score
-            with open("/home/jarred/git/Brainground/BCI/score_output.txt", "r") as f: # Actual Score
-                brightness = float(f.read().strip()) / 100.0
-                brightness = max(0.0, min(1.0, brightness))
+            # with open("/home/jarred/git/Brainground/BCI/score_output.txt", "r") as f: # Actual Score - Linux
+            with open(r"D:\Brainground\git\Brainground\BCI\score_output.txt", "r") as f:  # Actual Score - Windows
+                score = float(f.read().strip())
+                brightness = 1.0 - (score / 100.0)  # Invert brightness
+                brightness = max(0.0, min(1.0, brightness))  # Clamp to [0, 1]
                 self.alight.setColor((brightness, brightness, brightness, 1))
                 self.dlight.setColor((brightness, brightness, brightness, 1))
         except:

@@ -50,12 +50,16 @@ class DataAquisition:
         if self.raw is None:
             print("No EDF file loaded. Call read_edf() first.")
             return
-        
+
         available_channels = self.raw.ch_names
-        self.selected_channels = [ch for ch in channel_names if ch in available_channels]
+        valid_channels = [ch for ch in channel_names if ch in available_channels]
+        self.selected_channels = list(dict.fromkeys(valid_channels))  # Unique & ordered
+
+        if len(self.selected_channels) < len(channel_names):
+            print(f"⚠️ Warning: Duplicate or invalid channels removed: {channel_names} → {self.selected_channels}")
 
         if not self.selected_channels:
-            print("Error: None of the selected channels exist in this EDF file.")
+            print("❌ Error: No valid EEG channels found in the EDF file.")
             return
 
         self.raw = self.raw.pick_channels(self.selected_channels)
