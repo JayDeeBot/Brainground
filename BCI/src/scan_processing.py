@@ -118,7 +118,7 @@ class ScanProcessing:
         left_psd = psd_data[:, left_idx]
         right_psd = psd_data[:, right_idx]
 
-        asymmetry_score = np.log10(right_psd + 1e-10) - np.log10(left_psd + 1e-10)
+        asymmetry_score = np.log10(left_psd + 1e-10) - np.log10(right_psd + 1e-10)
         avg_score = np.mean(asymmetry_score)
 
         mapped_score = self.map_faa_score(avg_score)
