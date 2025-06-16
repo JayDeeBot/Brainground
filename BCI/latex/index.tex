@@ -1,0 +1,51 @@
+\hypertarget{index_intro_sec}{}\doxysection{Introduction}\label{index_intro_sec}
+The BCI Project is a real-\/time brain-\/computer interface system that reads EEG signals from .edf files, processes them to calculate upper-\/alpha band asymmetry scores, and visually represents those scores in both a graphical user interface (GUI) and a 3D virtual reality (VR) environment.
+
+This system is designed for closed-\/loop neurofeedback scenarios, making it suitable for cognitive experiments, affective computing, and interactive wellness applications.\hypertarget{index_features_sec}{}\doxysection{Features}\label{index_features_sec}
+
+\begin{DoxyItemize}
+\item Real-\/time EEG acquisition and visualization ~\newline
+
+\item Bandpass filtering and signal preprocessing ~\newline
+
+\item Epoch-\/based Power Spectral Density (PSD) analysis using Welch\textquotesingle{}s method ~\newline
+
+\item FAA (Frontal Alpha Asymmetry) score computation and normalization ~\newline
+
+\item GUI with live score updates and emotional emoji feedback ~\newline
+
+\item Immersive VR environment with lighting adjusted in real time based on EEG signals ~\newline
+
+\item Multiprocessing architecture for performance and responsiveness
+\end{DoxyItemize}\hypertarget{index_architecture_sec}{}\doxysection{System Architecture}\label{index_architecture_sec}
+
+\begin{DoxyItemize}
+\item Data\+Aquisition – Loads and streams EEG data in real time ~\newline
+
+\item Scan\+Processing – Filters EEG data, extracts epochs, and computes FAA asymmetry scores ~\newline
+
+\item Eeg\+Interface – GUI for selecting EEG files, channels, and visualizing scores ~\newline
+
+\item VRWorld – Panda3\+D-\/based 3D environment that responds to EEG-\/derived scores ~\newline
+
+\item main.\+py – Ties all components together using multiprocessing and real-\/time communication
+\end{DoxyItemize}\hypertarget{index_usage_sec}{}\doxysection{Getting Started}\label{index_usage_sec}
+
+\begin{DoxyEnumerate}
+\item Run the main script\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{py d:\(\backslash\)Brainground\(\backslash\)git\(\backslash\)Brainground\(\backslash\)BCI\(\backslash\)src\(\backslash\)main.py}
+
+\end{DoxyCode}
+
+\item Select an .edf EEG file and two channels of interest via the GUI. ~\newline
+
+\item The GUI will show live score updates, and the VR world will launch automatically, adjusting lighting based on the user\textquotesingle{}s EEG asymmetry score.
+\end{DoxyEnumerate}\hypertarget{index_credits_sec}{}\doxysection{Authors}\label{index_credits_sec}
+
+\begin{DoxyItemize}
+\item Jarred Deluca – Developer and system architect ~\newline
+
+\item Built with\+: Python, Py\+Qt5, MNE, Panda3D, Sci\+Py, Num\+Py
+\end{DoxyItemize}\hypertarget{index_license_sec}{}\doxysection{License}\label{index_license_sec}
+This project is developed for academic and experimental use. Licensing terms TBD. 
